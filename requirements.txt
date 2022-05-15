@@ -1,0 +1,5 @@
+pytest
+pytest-sugar
+sentry_sdk
+undetected-chromedriver
+fake_useragent
