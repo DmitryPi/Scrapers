@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 
-from modules.utils import load_config, handle_error
+from .utils import load_config, handle_error
 
 
 class Database:

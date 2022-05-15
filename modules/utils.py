@@ -5,16 +5,18 @@ import codecs
 def build_config(config_name='config.ini') -> None:
     """Build default config section key/values"""
     config = configparser.ConfigParser()
-    config['MAIN'] = {
-        'debug': True,
-    }
-    config['DB'] = {
-        'table': 'project',
-    }
-    config['SENTRY'] = {
-        'dsn': '',
-        'log_level': 20,
-    }
+    config.update({
+        'MAIN': {
+            'debug': True,
+        },
+        'DB': {
+            'table': 'scrapers'
+        },
+        'SENTRY': {
+            'dsn': '',
+            'log_level': 20
+        },
+    })
     with open(config_name, 'w') as f:
         print('- Creating new config')
         config.write(f)
@@ -39,3 +41,15 @@ def handle_error(error, to_file=False, to_file_path='error_log.txt'):
             f.write(error + '\n')
     else:
         raise error
+
+
+def load_proxies(filename='proxies.txt'):
+    try:
+        proxies = []
+        with open(filename, 'r') as file:
+            proxies_raw = file.readlines()
+            for line in proxies_raw:
+                proxies.append(line.strip().split(':'))
+        return proxies
+    except Exception as e:
+        handle_error(e)

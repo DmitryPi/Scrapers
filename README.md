@@ -1,30 +1,18 @@
-# Python Boilerplate
-> Lightweight boilerplate for small python projects
-> Comes with easy-to-configure sqlite db and basic CRUD methods
-> Boilerplate follows PEP8 standard
+# Scrapers
+> Scrapers abound!
 
-## Startup
-    Create virtualenv
-    pip install -r requirements.txt
-    git init  &&  git add .  &&  git commit -m "initial"
-    git remote add origin {GITREPO.git}
-    git branch -M main
-    git push origin main
-    pytest
-    python main.py
 
 ## Features
-- SQLite3
-- Pytest
-- Sentry
 
 ## Composition
     | assets
     | modules
         db.py
+        scrapers.py
         utils.py
         | tests
             test_db.py
+            test_scrapers.py
             test_utils.py
     .editorconfig
     .gitignore

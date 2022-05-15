@@ -1,9 +1,11 @@
 import logging
+import sys
 import sentry_sdk
 
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from modules.db import Database
+from modules.scrapers import VKScraper
 from modules.utils import load_config
 
 
@@ -30,3 +32,6 @@ if __name__ == '__main__':
     db = Database()
     db_conn = db.create_connection()
     db.create_table(db_conn)
+
+    if 'vk' in sys.argv:
+        vk_scraper = VKScraper(config=config)
