@@ -2,7 +2,13 @@ import re
 
 from unittest import TestCase
 
-from ..utils import load_config, load_proxies, proxy_build_rotate
+from ..utils import (
+    load_config,
+    load_proxies,
+    proxy_build_rotate,
+    setup_user_agent,
+    setup_selenium_proxy,
+)
 
 
 class TestUtils(TestCase):
@@ -39,3 +45,18 @@ class TestUtils(TestCase):
         matches = [match1, match2, match3]
         for match in matches:
             self.assertTrue(match)
+
+    def test_setup_user_agent(self):
+        user_agent1 = setup_user_agent()
+        user_agent2 = setup_user_agent()
+        self.assertTrue(user_agent1 != user_agent2)
+        self.assertTrue(isinstance(user_agent1, str))
+        self.assertTrue(isinstance(user_agent2, str))
+
+    def test_setup_selenium_proxy(self):
+        proxies = load_proxies()
+        proxy = proxy_build_rotate(proxies)
+        capabilities = setup_selenium_proxy(proxy)
+        self.assertTrue(isinstance(capabilities, dict))
+        self.assertTrue(capabilities['browserName'] == 'chrome')
+        self.assertTrue(capabilities['proxy']['httpProxy'] == proxy)

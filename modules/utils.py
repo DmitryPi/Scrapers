@@ -2,6 +2,10 @@ import configparser
 import codecs
 import random
 
+from selenium import webdriver
+from selenium.webdriver.common.proxy import Proxy, ProxyType
+from fake_useragent import UserAgent
+
 
 def build_config(config_name='config.ini') -> None:
     """Build default config section key/values"""
@@ -45,6 +49,7 @@ def handle_error(error, to_file=False, to_file_path='error_log.txt'):
 
 
 def load_proxies(filename='proxies.txt'):
+    """Load proxies from local file"""
     try:
         proxies = []
         with open(filename, 'r') as file:
@@ -56,7 +61,8 @@ def load_proxies(filename='proxies.txt'):
         handle_error(e)
 
 
-def proxy_build_rotate(proxies, protocol=''):
+def proxy_build_rotate(proxies: list, protocol='') -> str:
+    """Build http/https proxy for list of proxies"""
     proxy_index = random.randint(0, len(proxies) - 1)
     proxy = proxies[proxy_index]
     if protocol:
@@ -65,3 +71,21 @@ def proxy_build_rotate(proxies, protocol=''):
         proxy = f'{proxy[2]}:{proxy[3]}@{proxy[0]}:{proxy[1]}'
     print('- Proxy: ', proxy)
     return proxy
+
+
+def setup_user_agent() -> str:
+    """Generate user_agent string"""
+    user_agent = UserAgent()
+    return user_agent.random
+
+
+def setup_selenium_proxy(proxy: str) -> dict:
+    """Setup http proxy for selenium"""
+    proxy = Proxy({
+        'proxyType': ProxyType.MANUAL,
+        'httpProxy': proxy,
+        'sslProxy': 'https://' + proxy,
+        'noProxy': ''})
+    capabilities = webdriver.DesiredCapabilities.CHROME
+    proxy.add_to_capabilities(capabilities)
+    return capabilities
