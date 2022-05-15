@@ -1,5 +1,6 @@
 import configparser
 import codecs
+import random
 
 
 def build_config(config_name='config.ini') -> None:
@@ -53,3 +54,14 @@ def load_proxies(filename='proxies.txt'):
         return proxies
     except Exception as e:
         handle_error(e)
+
+
+def proxy_build_rotate(proxies, protocol=''):
+    proxy_index = random.randint(0, len(proxies) - 1)
+    proxy = proxies[proxy_index]
+    if protocol:
+        proxy = f'{protocol}://{proxy[2]}:{proxy[3]}@{proxy[0]}:{proxy[1]}'
+    else:
+        proxy = f'{proxy[2]}:{proxy[3]}@{proxy[0]}:{proxy[1]}'
+    print('- Proxy: ', proxy)
+    return proxy
