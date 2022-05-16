@@ -65,7 +65,7 @@ class TestUtils(TestCase):
         self.assertTrue(capabilities['browserName'] == 'chrome')
         self.assertTrue(capabilities['proxy']['httpProxy'] == proxy)
 
-    def test_setup_selenium_driver_options(self, use_driver=False, test_url='https://google.com'):
+    def test_setup_selenium_driver_options(self, use_driver=False, test_url='https://google.com/'):
         options = setup_selenium_driver_options(headless=False)
         self.assertTrue(options)
         self.assertTrue('selenium' in options.__class__.__module__)
@@ -78,7 +78,7 @@ class TestUtils(TestCase):
         options1 = setup_selenium_driver_options(platform='test123')
         self.assertFalse(options1)
 
-    def test_setup_uc_driver_options(self, use_driver=True, test_url='https://napaonline.com/'):
+    def test_setup_uc_driver_options(self, use_driver=False, test_url='https://google.com/'):
         options = setup_uc_driver_options(headless=False)
         self.assertTrue(options)
         self.assertTrue('undetected_chromedriver' in options.__class__.__module__)
