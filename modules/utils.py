@@ -93,3 +93,35 @@ def setup_selenium_proxy(proxy: str) -> dict:
     capabilities = webdriver.DesiredCapabilities.CHROME
     proxy.add_to_capabilities(capabilities)
     return capabilities
+
+
+def setup_selenium_driver_options(
+        headless=True, disable_gpu=True, silent=True, platform='chrome') -> bytes:
+    """Setup driver option for chrome; Can be used by selenium"""
+    try:
+        if platform == 'chrome':
+            driver_opts = webdriver.ChromeOptions()
+            if headless:
+                driver_opts.add_argument('headless')
+            if disable_gpu:
+                driver_opts.add_argument('disable-gpu')
+            driver_opts.add_argument('log-level=3')
+            driver_opts.add_argument('lang=en-US')
+            if silent:
+                driver_opts.add_argument('silent')
+            return driver_opts
+        else:
+            logging.warning('Unknown kwarg `platform={}` passed in {}'.format(
+                platform,
+                setup_selenium_driver_options.__name__,
+            ))
+    except Exception as e:
+        handle_error(e)
+
+
+def setup_uc_driver_options():
+    """Driver options for undetected_chromedriver; only Chrome"""
+    try:
+        pass
+    except Exception as e:
+        handle_error(e)

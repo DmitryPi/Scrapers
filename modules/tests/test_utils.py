@@ -1,6 +1,9 @@
 import re
+import time
+import undetected_chromedriver as uc
 
 from unittest import TestCase
+from selenium import webdriver
 
 from ..utils import (
     load_config,
@@ -8,6 +11,7 @@ from ..utils import (
     proxy_build_rotate,
     setup_user_agent,
     setup_selenium_proxy,
+    setup_selenium_driver_options,
 )
 
 
@@ -60,3 +64,15 @@ class TestUtils(TestCase):
         self.assertTrue(isinstance(capabilities, dict))
         self.assertTrue(capabilities['browserName'] == 'chrome')
         self.assertTrue(capabilities['proxy']['httpProxy'] == proxy)
+
+    def test_setup_selenium_driver_options(self, use_driver=False, test_url='https://google.com'):
+        options = setup_selenium_driver_options(headless=False)
+        self.assertTrue(options)
+        if use_driver:
+            driver = webdriver.Chrome(options=options)
+            driver.get(test_url)
+            # time.sleep(1)
+            driver.quit()
+
+        options1 = setup_selenium_driver_options(platform='test123')
+        self.assertFalse(options1)
