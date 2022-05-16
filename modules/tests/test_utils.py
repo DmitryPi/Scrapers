@@ -11,16 +11,18 @@ from ..utils import (
     load_proxies,
     proxy_build_rotate,
     setup_user_agent,
-    setup_selenium_proxy,
     setup_selenium_driver_options,
     setup_uc_driver_options,
-    UCProxyExtension,
+    ProxyExtension,
 )
 
 
 class TestUtils(TestCase):
     def setUp(self):
-        pass
+        self.proxies = load_proxies()
+        self.blocked_urls = [
+            'https://www.facebook.com/',
+        ]
 
     def test_load_config(self):
         sections = ['MAIN', 'DB', 'SENTRY']
@@ -41,10 +43,9 @@ class TestUtils(TestCase):
             self.assertTrue(re.match(r'^\d+$', proxy[1]))
 
     def test_proxy_build_rotate(self):
-        proxies = load_proxies()
-        proxy1 = proxy_build_rotate(proxies)
-        proxy2 = proxy_build_rotate(proxies)
-        proxy3 = proxy_build_rotate(proxies, protocol='https')
+        proxy1 = proxy_build_rotate(self.proxies)
+        proxy2 = proxy_build_rotate(self.proxies)
+        proxy3 = proxy_build_rotate(self.proxies, protocol='https')
         match1 = re.match(r'^[a-z0-9]+[:][a-z0-9]+[@]\d+[.]\d+[.]\d+[.]\d+[:]\d+$', proxy1)
         match2 = re.match(r'^[a-z0-9]+[:][a-z0-9]+[@]\d+[.]\d+[.]\d+[.]\d+[:]\d+$', proxy2)
         match3 = re.match(r'^https://[a-z0-9]+[:][a-z0-9]+[@]\d+[.]\d+[.]\d+[.]\d+[:]\d+$', proxy3)
@@ -58,14 +59,6 @@ class TestUtils(TestCase):
         self.assertTrue(user_agent1 != user_agent2)
         self.assertTrue(isinstance(user_agent1, str))
         self.assertTrue(isinstance(user_agent2, str))
-
-    def test_setup_selenium_proxy(self):
-        proxies = load_proxies()
-        proxy = proxy_build_rotate(proxies)
-        capabilities = setup_selenium_proxy(proxy)
-        self.assertTrue(isinstance(capabilities, dict))
-        self.assertTrue(capabilities['browserName'] == 'chrome')
-        self.assertTrue(capabilities['proxy']['httpProxy'] == proxy)
 
     def test_setup_selenium_driver_options(self, use_driver=False, test_url='https://google.com/'):
         options = setup_selenium_driver_options(headless=False)
@@ -90,19 +83,32 @@ class TestUtils(TestCase):
             time.sleep(1)
             driver.close()
 
-    def test_use_uc_proxy(self, use_driver=False):
-        """use_driver=True to test UCProxyExtension with undetected_chromedriver"""
-        urls = [
-            'https://www.napaonline.com/',
-            'https://www.facebook.com/',
-        ]
-        proxies = load_proxies()
-        proxy = random.choice(proxies)
-        print(proxy)
+    def test_use_selenium_with_proxy(self, use_driver=False):
+        """use_driver=True to test proxy with selenium"""
         if not use_driver:
-            return
-        proxy_extension = UCProxyExtension(*proxies[1])
-        options = setup_uc_driver_options(headless=False, proxy_extension=proxy_extension)
-        driver = uc.Chrome(options=options)
-        driver.get(urls[0])
+            return None
+        proxy = random.choice(self.proxies)
+        proxy_extension = ProxyExtension(*proxy)
+        options = setup_selenium_driver_options(
+            headless=False,
+            # user_agent=setup_user_agent(),
+            proxy_extension=proxy_extension)
+        driver = webdriver.Chrome(options=options)
+        driver.get(self.blocked_urls[0])
         time.sleep(2)
+        driver.quit()
+
+    def test_use_uc_with_proxy(self, use_driver=False):
+        """use_driver=True to test ProxyExtension with undetected_chromedriver"""
+        if not use_driver:
+            return None
+        proxy = random.choice(self.proxies)
+        proxy_extension = ProxyExtension(*proxy)
+        options = setup_uc_driver_options(
+            headless=False,
+            # user_agent=setup_user_agent(),
+            proxy_extension=proxy_extension)
+        driver = uc.Chrome(options=options)
+        driver.get(self.blocked_urls[0])
+        time.sleep(2)
+        driver.quit()

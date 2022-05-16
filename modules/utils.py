@@ -8,7 +8,6 @@ import tempfile
 import undetected_chromedriver as uc
 
 from selenium import webdriver
-from selenium.webdriver.common.proxy import Proxy, ProxyType
 from fake_useragent import UserAgent
 
 
@@ -86,20 +85,9 @@ def setup_user_agent() -> str:
     return user_agent.random
 
 
-def setup_selenium_proxy(proxy: str) -> dict:
-    """Setup http proxy for selenium"""
-    proxy = Proxy({
-        'proxyType': ProxyType.MANUAL,
-        'httpProxy': proxy,
-        'sslProxy': 'https://' + proxy,
-        'noProxy': ''})
-    capabilities = webdriver.DesiredCapabilities.CHROME
-    proxy.add_to_capabilities(capabilities)
-    return capabilities
-
-
 def setup_selenium_driver_options(
-        headless=True, disable_gpu=True, silent=True, platform='chrome') -> bytes:
+        headless=True, disable_gpu=True, silent=True,
+        user_agent='', proxy_extension=None, platform='chrome') -> bytes:
     """Setup driver option for chrome; Can be used by selenium"""
     try:
         if platform == 'chrome':
@@ -112,6 +100,10 @@ def setup_selenium_driver_options(
             options.add_argument('lang=en-US')
             if silent:
                 options.add_argument('silent')
+            if user_agent:
+                options.add_argument(f'--user-agent={user_agent}')
+            if proxy_extension:
+                options.add_argument(f"--load-extension={proxy_extension.directory}")
             return options
         else:
             logging.warning('Unknown kwarg `platform={}` passed in {}'.format(
@@ -122,7 +114,8 @@ def setup_selenium_driver_options(
         handle_error(e)
 
 
-def setup_uc_driver_options(headless=True, disable_gpu=True, proxy_extension=None) -> bytes:
+def setup_uc_driver_options(
+        headless=True, disable_gpu=True, user_agent='', proxy_extension=None) -> bytes:
     """Driver options for undetected_chromedriver; only Chrome"""
     try:
         options = uc.ChromeOptions()
@@ -133,6 +126,8 @@ def setup_uc_driver_options(headless=True, disable_gpu=True, proxy_extension=Non
         options.add_argument('--log-level=3')
         options.add_argument('--lang=en-US')
         options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+        if user_agent:
+            options.add_argument(f'--user-agent={user_agent}')
         if proxy_extension:
             options.add_argument(f"--load-extension={proxy_extension.directory}")
         return options
@@ -140,7 +135,8 @@ def setup_uc_driver_options(headless=True, disable_gpu=True, proxy_extension=Non
         handle_error(e)
 
 
-class UCProxyExtension:
+class ProxyExtension:
+    """Enables proxies in Selenium & undetected_chromedriver"""
     manifest_json = """
     {
         "version": "1.0.0",
