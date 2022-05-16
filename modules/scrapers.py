@@ -7,4 +7,4 @@ from .utils import load_proxies
 class VKScraper:
     def __init__(self, config=None):
         self.config = config
-        print(load_proxies())
+        self.proxies = load_proxies()

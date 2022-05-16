@@ -1,5 +1,6 @@
 import configparser
 import codecs
+import logging
 import random
 
 from selenium import webdriver
@@ -50,12 +51,15 @@ def handle_error(error, to_file=False, to_file_path='error_log.txt'):
 
 def load_proxies(filename='proxies.txt'):
     """Load proxies from local file"""
+    proxies = []
     try:
-        proxies = []
         with open(filename, 'r') as file:
             proxies_raw = file.readlines()
             for line in proxies_raw:
                 proxies.append(line.strip().split(':'))
+        return proxies
+    except FileNotFoundError:
+        logging.warning(f'Proxy file: {filename} not found')
         return proxies
     except Exception as e:
         handle_error(e)
