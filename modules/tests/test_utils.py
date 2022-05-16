@@ -1,5 +1,6 @@
 import re
 import time
+import random
 import undetected_chromedriver as uc
 
 from unittest import TestCase
@@ -13,6 +14,7 @@ from ..utils import (
     setup_selenium_proxy,
     setup_selenium_driver_options,
     setup_uc_driver_options,
+    UCProxyExtension,
 )
 
 
@@ -85,5 +87,22 @@ class TestUtils(TestCase):
         if use_driver:
             driver = uc.Chrome(options=options)
             driver.get(test_url)
-            time.sleep(3)
+            time.sleep(1)
             driver.close()
+
+    def test_use_uc_proxy(self, use_driver=False):
+        """use_driver=True to test UCProxyExtension with undetected_chromedriver"""
+        urls = [
+            'https://www.napaonline.com/',
+            'https://www.facebook.com/',
+        ]
+        proxies = load_proxies()
+        proxy = random.choice(proxies)
+        print(proxy)
+        if not use_driver:
+            return
+        proxy_extension = UCProxyExtension(*proxies[1])
+        options = setup_uc_driver_options(headless=False, proxy_extension=proxy_extension)
+        driver = uc.Chrome(options=options)
+        driver.get(urls[0])
+        time.sleep(2)

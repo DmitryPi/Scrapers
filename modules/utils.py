@@ -1,7 +1,10 @@
 import configparser
 import codecs
 import logging
+import os
 import random
+import shutil
+import tempfile
 import undetected_chromedriver as uc
 
 from selenium import webdriver
@@ -68,8 +71,7 @@ def load_proxies(filename='proxies.txt'):
 
 def proxy_build_rotate(proxies: list, protocol='') -> str:
     """Build http/https proxy for list of proxies"""
-    proxy_index = random.randint(0, len(proxies) - 1)
-    proxy = proxies[proxy_index]
+    proxy = random.choice(proxies)
     if protocol:
         proxy = f'{protocol}://{proxy[2]}:{proxy[3]}@{proxy[0]}:{proxy[1]}'
     else:
@@ -120,7 +122,7 @@ def setup_selenium_driver_options(
         handle_error(e)
 
 
-def setup_uc_driver_options(headless=True, disable_gpu=True) -> bytes:
+def setup_uc_driver_options(headless=True, disable_gpu=True, proxy_extension=None) -> bytes:
     """Driver options for undetected_chromedriver; only Chrome"""
     try:
         options = uc.ChromeOptions()
@@ -131,6 +133,79 @@ def setup_uc_driver_options(headless=True, disable_gpu=True) -> bytes:
         options.add_argument('--log-level=3')
         options.add_argument('--lang=en-US')
         options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+        if proxy_extension:
+            options.add_argument(f"--load-extension={proxy_extension.directory}")
         return options
     except Exception as e:
         handle_error(e)
+
+
+class UCProxyExtension:
+    manifest_json = """
+    {
+        "version": "1.0.0",
+        "manifest_version": 2,
+        "name": "Chrome Proxy",
+        "permissions": [
+            "proxy",
+            "tabs",
+            "unlimitedStorage",
+            "storage",
+            "<all_urls>",
+            "webRequest",
+            "webRequestBlocking"
+        ],
+        "background": {"scripts": ["background.js"]},
+        "minimum_chrome_version": "76.0.0"
+    }
+    """
+
+    background_js = """
+    var config = {
+        mode: "fixed_servers",
+        rules: {
+            singleProxy: {
+                scheme: "http",
+                host: "%s",
+                port: %d
+            },
+            bypassList: ["localhost"]
+        }
+    };
+
+    chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+    function callbackFn(details) {
+        return {
+            authCredentials: {
+                username: "%s",
+                password: "%s"
+            }
+        };
+    }
+
+    chrome.webRequest.onAuthRequired.addListener(
+        callbackFn,
+        { urls: ["<all_urls>"] },
+        ['blocking']
+    );
+    """
+
+    def __init__(self, host, port, user, password):
+        self._dir = os.path.normpath(tempfile.mkdtemp())
+
+        manifest_file = os.path.join(self._dir, "manifest.json")
+        with open(manifest_file, mode="w") as f:
+            f.write(self.manifest_json)
+
+        background_js = self.background_js % (host, int(port), user, password)
+        background_file = os.path.join(self._dir, "background.js")
+        with open(background_file, mode="w") as f:
+            f.write(background_js)
+
+    @property
+    def directory(self):
+        return self._dir
+
+    def __del__(self):
+        shutil.rmtree(self._dir)
