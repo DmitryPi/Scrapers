@@ -2,6 +2,7 @@ import configparser
 import codecs
 import logging
 import random
+import undetected_chromedriver as uc
 
 from selenium import webdriver
 from selenium.webdriver.common.proxy import Proxy, ProxyType
@@ -100,16 +101,16 @@ def setup_selenium_driver_options(
     """Setup driver option for chrome; Can be used by selenium"""
     try:
         if platform == 'chrome':
-            driver_opts = webdriver.ChromeOptions()
+            options = webdriver.ChromeOptions()
             if headless:
-                driver_opts.add_argument('headless')
+                options.add_argument('headless')
             if disable_gpu:
-                driver_opts.add_argument('disable-gpu')
-            driver_opts.add_argument('log-level=3')
-            driver_opts.add_argument('lang=en-US')
+                options.add_argument('disable-gpu')
+            options.add_argument('log-level=3')
+            options.add_argument('lang=en-US')
             if silent:
-                driver_opts.add_argument('silent')
-            return driver_opts
+                options.add_argument('silent')
+            return options
         else:
             logging.warning('Unknown kwarg `platform={}` passed in {}'.format(
                 platform,
@@ -119,9 +120,17 @@ def setup_selenium_driver_options(
         handle_error(e)
 
 
-def setup_uc_driver_options():
+def setup_uc_driver_options(headless=True, disable_gpu=True) -> bytes:
     """Driver options for undetected_chromedriver; only Chrome"""
     try:
-        pass
+        options = uc.ChromeOptions()
+        if headless:
+            options.add_argument('--headless')
+        if disable_gpu:
+            options.add_argument('--disable-gpu')
+        options.add_argument('--log-level=3')
+        options.add_argument('--lang=en-US')
+        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+        return options
     except Exception as e:
         handle_error(e)

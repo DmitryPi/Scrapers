@@ -12,6 +12,7 @@ from ..utils import (
     setup_user_agent,
     setup_selenium_proxy,
     setup_selenium_driver_options,
+    setup_uc_driver_options,
 )
 
 
@@ -42,7 +43,6 @@ class TestUtils(TestCase):
         proxy1 = proxy_build_rotate(proxies)
         proxy2 = proxy_build_rotate(proxies)
         proxy3 = proxy_build_rotate(proxies, protocol='https')
-        self.assertTrue(proxy1 != proxy2)
         match1 = re.match(r'^[a-z0-9]+[:][a-z0-9]+[@]\d+[.]\d+[.]\d+[.]\d+[:]\d+$', proxy1)
         match2 = re.match(r'^[a-z0-9]+[:][a-z0-9]+[@]\d+[.]\d+[.]\d+[.]\d+[:]\d+$', proxy2)
         match3 = re.match(r'^https://[a-z0-9]+[:][a-z0-9]+[@]\d+[.]\d+[.]\d+[.]\d+[:]\d+$', proxy3)
@@ -68,11 +68,22 @@ class TestUtils(TestCase):
     def test_setup_selenium_driver_options(self, use_driver=False, test_url='https://google.com'):
         options = setup_selenium_driver_options(headless=False)
         self.assertTrue(options)
+        self.assertTrue('selenium' in options.__class__.__module__)
         if use_driver:
             driver = webdriver.Chrome(options=options)
             driver.get(test_url)
-            # time.sleep(1)
+            time.sleep(1)
             driver.quit()
 
         options1 = setup_selenium_driver_options(platform='test123')
         self.assertFalse(options1)
+
+    def test_setup_uc_driver_options(self, use_driver=True, test_url='https://napaonline.com/'):
+        options = setup_uc_driver_options(headless=False)
+        self.assertTrue(options)
+        self.assertTrue('undetected_chromedriver' in options.__class__.__module__)
+        if use_driver:
+            driver = uc.Chrome(options=options)
+            driver.get(test_url)
+            time.sleep(3)
+            driver.close()
