@@ -35,3 +35,4 @@ if __name__ == '__main__':
 
     if 'vk' in sys.argv:
         vk_scraper = VKScraper(config=config)
+        vk_scraper.run()
