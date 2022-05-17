@@ -137,8 +137,7 @@ def setup_uc_driver_options(
 
 class ProxyExtension:
     """Enables proxies in Selenium & undetected_chromedriver"""
-    manifest_json = """
-    {
+    manifest_json = """{
         "version": "1.0.0",
         "manifest_version": 2,
         "name": "Chrome Proxy",
@@ -153,38 +152,37 @@ class ProxyExtension:
         ],
         "background": {"scripts": ["background.js"]},
         "minimum_chrome_version": "76.0.0"
-    }
-    """
+    }"""
 
     background_js = """
-    var config = {
-        mode: "fixed_servers",
-        rules: {
-            singleProxy: {
-                scheme: "http",
-                host: "%s",
-                port: %d
-            },
-            bypassList: ["localhost"]
-        }
-    };
-
-    chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
-
-    function callbackFn(details) {
-        return {
-            authCredentials: {
-                username: "%s",
-                password: "%s"
+        var config = {
+            mode: "fixed_servers",
+            rules: {
+                singleProxy: {
+                    scheme: "http",
+                    host: "%s",
+                    port: %d
+                },
+                bypassList: ["localhost"]
             }
         };
-    }
 
-    chrome.webRequest.onAuthRequired.addListener(
-        callbackFn,
-        { urls: ["<all_urls>"] },
-        ['blocking']
-    );
+        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+        function callbackFn(details) {
+            return {
+                authCredentials: {
+                    username: "%s",
+                    password: "%s"
+                }
+            };
+        }
+
+        chrome.webRequest.onAuthRequired.addListener(
+            callbackFn,
+            { urls: ["<all_urls>"] },
+            ['blocking']
+        );
     """
 
     def __init__(self, host, port, user, password):
