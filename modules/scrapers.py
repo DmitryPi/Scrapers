@@ -104,3 +104,14 @@ class VKScraper(Scraper):
 
     def run(self):
         pass
+
+
+class WBScraper(Scraper):
+    def __init__(self, config=None):
+        Scraper.__init__(self)
+        self.window = (1800, 1000)
+        self.config = config if config else load_config()
+        self.urls = json.loads(self.config['WB']['urls'])
+
+    def run(self):
+        pass
