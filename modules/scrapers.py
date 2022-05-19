@@ -55,6 +55,7 @@ class Scraper:
 class VKScraper(Scraper):
     def __init__(self, config=None):
         Scraper.__init__(self)
+        self.window = (1800, 1000)
         self.config = config if config else load_config()
         self.proxies = load_proxies()
         self.urls = json.loads(self.config['VK']['urls'])
@@ -63,12 +64,10 @@ class VKScraper(Scraper):
         """Check if logged in/else login-repeat"""
         options = setup_uc_driver_options(headless=False)
         driver = webdriver.Chrome(options=options)
+        driver.set_window_size(self.window[0], self.window[1])
         driver.get(url)
-        self.sel_load_cookies(driver, prefix='vk_')
         try:
-            driver.get(url)
-            time.sleep(5)
-            # self.vk_login(driver)
+            self.vk_login(driver)
         except NoSuchElementException as e:
             print(e)
 
