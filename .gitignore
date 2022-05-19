@@ -10,6 +10,7 @@ __pycache__/
 
 # Project
 proxies.txt
+assets/*.pkl
 
 
 # C extensions
