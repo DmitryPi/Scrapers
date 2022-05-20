@@ -40,14 +40,13 @@ class Scraper:
 
     def sel_save_cookies(self, driver, prefix=''):
         cookies = driver.get_cookies()
-        print(driver.get_cookies())
         pickle.dump(cookies, open(self.cookies_path.format(prefix), 'wb'))
 
     def sel_load_cookies(self, driver, prefix=''):
-        path = self.cookies_path.format(prefix)
         try:
-            if os.path.exists(path):
-                cookies = pickle.load(open(path, "rb"))
+            cookies_path = self.cookies_path.format(prefix)
+            if os.path.exists(cookies_path):
+                cookies = pickle.load(open(cookies_path, "rb"))
                 for cookie in cookies:
                     driver.add_cookie(cookie)
                 driver.refresh()
@@ -58,21 +57,12 @@ class Scraper:
 class VKScraper(Scraper):
     def __init__(self, config=None):
         Scraper.__init__(self)
-        self.window = (1800, 1000)
         self.config = config if config else load_config()
         self.proxies = load_proxies()
         self.urls = json.loads(self.config['VK']['urls'])
 
-    def vk_get_page(self, url):
-        """Check if logged in/else login-repeat"""
-        options = setup_uc_driver_options(headless=False)
-        driver = webdriver.Chrome(options=options)
-        driver.set_window_size(self.window[0], self.window[1])
-        driver.get(url)
-        try:
-            self.vk_login(driver)
-        except NoSuchElementException as e:
-            print(e)
+    def vk_get_group_post_item(self, driver):
+        pass
 
     def vk_check_logged(self, driver):
         """Check if we're logged in"""
@@ -84,6 +74,7 @@ class VKScraper(Scraper):
             return True
 
     def vk_login(self, driver):
+        """TODO: Solve VK load_cookies relogin returns 429 error"""
         # find login btn
         login_btn = self.vk_check_logged(driver)
         if isinstance(login_btn, bool):  # no login btn - we're logged in
@@ -106,7 +97,14 @@ class VKScraper(Scraper):
             self.sel_save_cookies(driver, prefix='vk_')
 
     def run(self):
-        pass
+        try:
+            url = self.urls[0]
+            options = setup_uc_driver_options(headless=False)
+            driver = webdriver.Chrome(options=options)
+            driver.get(url)
+            self.vk_login(driver)
+        except Exception as e:
+            handle_error(e)
 
 
 class WBScraper(Scraper):

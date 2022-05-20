@@ -86,7 +86,7 @@ def setup_user_agent() -> str:
 
 
 def setup_selenium_driver_options(
-        headless=True, disable_gpu=True, silent=True,
+        headless=True, disable_gpu=True, silent=True, wh=(1800, 1000),
         user_agent='', proxy_extension=None, platform='chrome') -> bytes:
     """Setup driver option for chrome; Can be used by selenium"""
     try:
@@ -96,6 +96,7 @@ def setup_selenium_driver_options(
                 options.add_argument('headless')
             if disable_gpu:
                 options.add_argument('disable-gpu')
+            options.add_argument(f'window-size={wh[0]},{wh[1]}')
             options.add_argument('log-level=3')
             options.add_argument('lang=en-US')
             if silent:
@@ -115,7 +116,8 @@ def setup_selenium_driver_options(
 
 
 def setup_uc_driver_options(
-        headless=True, disable_gpu=True, user_agent='', proxy_extension=None) -> bytes:
+        headless=True, disable_gpu=True, wh=(1800, 1000),
+        user_agent='', proxy_extension=None) -> bytes:
     """Driver options for undetected_chromedriver; only Chrome"""
     try:
         options = uc.ChromeOptions()
@@ -123,6 +125,7 @@ def setup_uc_driver_options(
             options.add_argument('--headless')
         if disable_gpu:
             options.add_argument('--disable-gpu')
+        options.add_argument(f'--window-size={wh[0]},{wh[1]}')
         options.add_argument('--log-level=3')
         options.add_argument('--lang=en-US')
         options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
