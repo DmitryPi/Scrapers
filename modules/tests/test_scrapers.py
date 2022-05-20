@@ -1,4 +1,6 @@
+import os
 import pytest
+import time
 import undetected_chromedriver as webdriver
 
 from unittest import TestCase
@@ -31,11 +33,19 @@ class TestScraper(TestCase, Scraper):
         self.assertTrue(len(items))
         self.assertTrue(isinstance(items, list))
 
+    @pytest.mark.slow
     def test_sel_save_cookies(self):
-        pass
+        driver = webdriver.Chrome(self.options)
+        driver.get('https://yandex.ru/')
+        self.sel_save_cookies(driver, prefix='test_')
+        self.assertTrue(os.path.exists(self.cookies_path.format('test_')))
 
+    @pytest.mark.slow
     def test_sel_load_cookies(self):
-        pass
+        driver = webdriver.Chrome(self.options)
+        driver.get('https://yandex.ru/')
+        self.sel_load_cookies(driver, prefix='test_')
+        time.sleep(1)
 
 
 class TestVKScraper(TestCase, VKScraper):

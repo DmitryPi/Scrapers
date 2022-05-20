@@ -1,6 +1,7 @@
 import pickle
 import time
 import json
+import os
 import undetected_chromedriver as webdriver
 
 from selenium.webdriver.common.by import By
@@ -39,15 +40,17 @@ class Scraper:
 
     def sel_save_cookies(self, driver, prefix=''):
         cookies = driver.get_cookies()
+        print(driver.get_cookies())
         pickle.dump(cookies, open(self.cookies_path.format(prefix), 'wb'))
 
     def sel_load_cookies(self, driver, prefix=''):
+        path = self.cookies_path.format(prefix)
         try:
-            cookies = pickle.load(open(self.cookies_path.format(prefix), "rb"))
-            for cookie in cookies:
-                driver.add_cookie(cookie)
-        except FileNotFoundError:
-            print('No cookies found')
+            if os.path.exists(path):
+                cookies = pickle.load(open(path, "rb"))
+                for cookie in cookies:
+                    driver.add_cookie(cookie)
+                driver.refresh()
         except Exception as e:
             handle_error(e)
 
