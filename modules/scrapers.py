@@ -76,8 +76,17 @@ class VKScraper(Scraper):
         self.proxies = load_proxies()
         self.urls = json.loads(self.config['VK']['urls'])
 
-    def vk_get_group_post_item(self, driver):
-        pass
+    def vk_get_group_post_data(self, author, date, text):
+        post = {}
+        post_author = author.text
+        post_date = date.text
+        post_text = text.text
+        post.update({
+            'post_author': post_author,
+            'post_date': post_date,
+            'post_text': post_text,
+        })
+        return post
 
     def vk_login(self, driver):
         """TODO: Solve VK load_cookies relogin returns 429 error"""
@@ -106,8 +115,15 @@ class VKScraper(Scraper):
             options = setup_uc_driver_options(headless=False)
             driver = webdriver.Chrome(options=options)
             driver.get(url)
-            self.vk_login(driver)
-            self.sel_scroll_down(driver, scrolls=5, delay=3)
+            # self.vk_login(driver)
+            # self.sel_scroll_down(driver, scrolls=5, delay=3)
+            item_authors = self.sel_find_css(driver, '.post_author', many=True, wait=2)
+            item_dates = self.sel_find_css(driver, '.post_date', many=True, wait=2)
+            item_texts = self.sel_find_css(driver, '.wall_post_text', many=True, wait=2)
+            for i, item in enumerate(item_dates):
+                data = self.vk_get_group_post_data(item_authors[i], item_dates[i], item_texts[i])
+                from pprint import pprint
+                pprint(data)
         except Exception as e:
             handle_error(e)
 

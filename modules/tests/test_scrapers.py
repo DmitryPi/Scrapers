@@ -51,7 +51,3 @@ class TestScraper(TestCase, Scraper):
 class TestVKScraper(TestCase, VKScraper):
     def setUp(self):
         VKScraper.__init__(self)
-
-    @pytest.mark.slow
-    def test_vk_get_page(self):
-        self.vk_get_page(self.urls[0])
