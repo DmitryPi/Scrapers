@@ -53,6 +53,21 @@ class Scraper:
         except Exception as e:
             handle_error(e)
 
+    def sel_scroll_down(self, driver, height=0, scrolls=1, delay=0):
+        """Scroll down to {height} or 'scroll' amount of times"""
+        if not height:
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            for i in range(scrolls):
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(delay)
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    print('Reached the end of page')
+                    break
+                last_height = new_height
+        else:
+            driver.execute_script('window.scrollTo(0, {})'.format(height))
+
 
 class VKScraper(Scraper):
     def __init__(self, config=None):
@@ -64,21 +79,10 @@ class VKScraper(Scraper):
     def vk_get_group_post_item(self, driver):
         pass
 
-    def vk_check_logged(self, driver):
-        """Check if we're logged in"""
-        try:
-            login_btn = self.sel_find_css(driver, 'button.quick_login_button', wait=2)
-            return login_btn
-        except NoSuchElementException:
-            print('Logged in vk')
-            return True
-
     def vk_login(self, driver):
         """TODO: Solve VK load_cookies relogin returns 429 error"""
         # find login btn
-        login_btn = self.vk_check_logged(driver)
-        if isinstance(login_btn, bool):  # no login btn - we're logged in
-            raise NoSuchElementException
+        login_btn = self.sel_find_css(driver, 'button.quick_login_button', wait=2)
         login_btn.click()
         # find login input field - send keys
         log_input = self.sel_find_css(driver, 'input[name="login"]', wait=5)
@@ -103,6 +107,7 @@ class VKScraper(Scraper):
             driver = webdriver.Chrome(options=options)
             driver.get(url)
             self.vk_login(driver)
+            self.sel_scroll_down(driver, scrolls=5, delay=3)
         except Exception as e:
             handle_error(e)
 
