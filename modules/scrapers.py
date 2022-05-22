@@ -7,6 +7,7 @@ import undetected_chromedriver as uc_webdriver
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -31,7 +32,9 @@ class Scraper:
         self.driver = None
 
     def create_driver_instance(self, driver: str, headless=False, use_ua=False, use_proxy=False):
-        """Create webdriver instance with designated params and set self.driver"""
+        """Create webdriver instance with designated params and set self.driver
+           Set driver to uc for undetected_chromedriver
+           Any other will set selenium driver"""
         options = setup_uc_driver_options if driver == 'uc' else setup_selenium_driver_options
         driver = uc_webdriver if driver == 'uc' else webdriver
         proxy = random.choice(self.proxies)
@@ -139,12 +142,7 @@ class VKScraper(Scraper):
     def run(self):
         url = self.urls[0]
         try:
-            self.create_driver_instance(
-                'uc',
-                headless=False,
-                # use_ua=True,
-                # use_proxy=True
-            )
+            self.create_driver_instance('uc', headless=False)
             self.driver.get(url)
             # self.vk_login(driver)
             # self.sel_scroll_down(driver, scrolls=5, delay=3)
@@ -171,29 +169,30 @@ class WBScraper(Scraper):
         self.urls = json.loads(self.config['WB']['urls'])
         self.search_words = json.loads(self.config['WB']['search_words'])
 
-    def wb_get_page(self, url):
-        self.driver.get(url)
-
     def wb_search_items(self):
         if not self.driver:
             return
         search_input = self.sel_find_css(self.driver, 'input.search-catalog__input')
         for word in self.search_words:
             search_input.send_keys(word)
-            # time.sleep(2)
-            break
+            search_input.send_keys(Keys.ENTER)
+            search_input.clear()
+            time.sleep(2)
 
     def run(self):
         url = self.urls[0]
         try:
             self.create_driver_instance(
-                'sel',
+                'uc',
                 headless=False,
                 # use_ua=True,
                 # use_proxy=True
             )
-            self.wb_get_page(url)
+            self.driver.get(url)
+            self.sel_load_cookies(self.driver, prefix='wb_')
+            time.sleep(1)
             self.wb_search_items()
+            self.sel_save_cookies(self.driver, prefix='wb_')
         except HTTPError as e:
             print(url, '\n', e)
         except Exception as e:
