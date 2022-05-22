@@ -9,12 +9,17 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from .utils import load_config, load_proxies, handle_error, setup_uc_driver_options
+from .utils import (
+    load_config,
+    load_proxies,
+    handle_error,
+    setup_uc_driver_options,
+)
 
 
 class Scraper:
     def __init__(self):
-        """WB VK Twitter"""
+        """WB VK Twitter Profi.ru bet365.com"""
         self.cookies_path = 'assets/{}cookies.pkl'
 
     def sel_find_css(self, driver, selector, many=False, wait=0):
