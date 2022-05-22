@@ -1,26 +1,48 @@
 import pickle
 import time
+import random
 import json
 import os
-import undetected_chromedriver as webdriver
+import undetected_chromedriver as uc_webdriver
 
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from urllib.error import HTTPError
 
 from .utils import (
     load_config,
     load_proxies,
     handle_error,
+    setup_user_agent,
+    setup_selenium_driver_options,
     setup_uc_driver_options,
+    ProxyExtension,
 )
 
 
 class Scraper:
     def __init__(self):
-        """WB VK Twitter Profi.ru bet365.com"""
+        """WB Twitter Instagram bet365.com"""
         self.cookies_path = 'assets/{}cookies.pkl'
+        self.proxies = load_proxies()
+        self.driver = None
+
+    def create_driver_instance(self, driver: str, headless=False, use_ua=False, use_proxy=False):
+        """Create webdriver instance with designated params and set self.driver"""
+        options = setup_uc_driver_options if driver == 'uc' else setup_selenium_driver_options
+        driver = uc_webdriver if driver == 'uc' else webdriver
+        proxy = random.choice(self.proxies)
+        proxy_extension = ProxyExtension(*proxy) if use_proxy else None
+        user_agent = setup_user_agent() if use_ua else ''
+        options = options(
+            headless=headless,
+            user_agent=user_agent,
+            proxy_extension=proxy_extension,
+        )
+        self.driver = driver.Chrome(options=options)
 
     def sel_find_css(self, driver, selector, many=False, wait=0):
         """Selenium find_element/s shortcut; Explicit wait for element wait=seconds"""
@@ -55,6 +77,7 @@ class Scraper:
                 for cookie in cookies:
                     driver.add_cookie(cookie)
                 driver.refresh()
+                return True
         except Exception as e:
             handle_error(e)
 
@@ -78,7 +101,6 @@ class VKScraper(Scraper):
     def __init__(self, config=None):
         Scraper.__init__(self)
         self.config = config if config else load_config()
-        self.proxies = load_proxies()
         self.urls = json.loads(self.config['VK']['urls'])
 
     def vk_get_group_post_data(self, author, date, text):
@@ -115,20 +137,29 @@ class VKScraper(Scraper):
             self.sel_save_cookies(driver, prefix='vk_')
 
     def run(self):
+        url = self.urls[0]
         try:
-            url = self.urls[0]
-            options = setup_uc_driver_options(headless=False)
-            driver = webdriver.Chrome(options=options)
-            driver.get(url)
+            self.create_driver_instance(
+                'uc',
+                headless=False,
+                # use_ua=True,
+                # use_proxy=True
+            )
+            self.driver.get(url)
             # self.vk_login(driver)
             # self.sel_scroll_down(driver, scrolls=5, delay=3)
-            item_authors = self.sel_find_css(driver, '.post_author', many=True, wait=2)
-            item_dates = self.sel_find_css(driver, '.post_date', many=True, wait=2)
-            item_texts = self.sel_find_css(driver, '.wall_post_text', many=True, wait=2)
+            item_authors = self.sel_find_css(
+                self.driver, '.post_author', many=True, wait=2)
+            item_dates = self.sel_find_css(
+                self.driver, '.post_date', many=True, wait=2)
+            item_texts = self.sel_find_css(
+                self.driver, '.wall_post_text', many=True, wait=2)
             for i, item in enumerate(item_dates):
                 data = self.vk_get_group_post_data(item_authors[i], item_dates[i], item_texts[i])
                 from pprint import pprint
                 pprint(data)
+        except HTTPError as e:
+            print(url, '\n', e)
         except Exception as e:
             handle_error(e)
 
@@ -136,9 +167,34 @@ class VKScraper(Scraper):
 class WBScraper(Scraper):
     def __init__(self, config=None):
         Scraper.__init__(self)
-        self.window = (1800, 1000)
         self.config = config if config else load_config()
         self.urls = json.loads(self.config['WB']['urls'])
+        self.search_words = json.loads(self.config['WB']['search_words'])
+
+    def wb_get_page(self, url):
+        self.driver.get(url)
+
+    def wb_search_items(self):
+        if not self.driver:
+            return
+        search_input = self.sel_find_css(self.driver, 'input.search-catalog__input')
+        for word in self.search_words:
+            search_input.send_keys(word)
+            # time.sleep(2)
+            break
 
     def run(self):
-        pass
+        url = self.urls[0]
+        try:
+            self.create_driver_instance(
+                'sel',
+                headless=False,
+                # use_ua=True,
+                # use_proxy=True
+            )
+            self.wb_get_page(url)
+            self.wb_search_items()
+        except HTTPError as e:
+            print(url, '\n', e)
+        except Exception as e:
+            handle_error(e)
