@@ -99,6 +99,16 @@ class Scraper:
         else:
             driver.execute_script('window.scrollTo(0, {})'.format(height))
 
+    def sel_humanlike_scroll_down(self, driver, height=100, step=20, delay=2, random_stop=True):
+        """Scroll like human; height=px, step=px, delay=ms, random_stops=seconds"""
+        steps = int(height / step)
+        for i in range(steps):
+            script = 'setInterval(window.scrollBy(0, {}), {})'
+            driver.execute_script(script.format(step, delay))
+        if random_stop:
+            """Stop after height is reached to load content"""
+            time.sleep(random.uniform(0.5, 1.5))
+
 
 class VKScraper(Scraper):
     def __init__(self, config=None):
@@ -205,9 +215,41 @@ class TWScraper(Scraper):
         self.config = config if config else load_config()
         self.urls = json.loads(self.config['TW']['urls'])
 
+    def tw_login(self, driver):
+        """Twitter login"""
+        login_btn = self.sel_find_css(driver, 'a[href="/login"]', wait=3)
+        login_btn.click()
+        time.sleep(2)
+        log_input = self.sel_find_css(driver, 'input[autocomplete="username"]')
+        log_input.send_keys(self.config['TW']['login'])
+        time.sleep(.5)
+        btns = self.sel_find_css(driver, 'div[role="button"]', many=True)
+        for btn in btns:  # avoid dealing with obfuscated html
+            if btn.text.lower() == 'next':
+                btn.click()
+                break
+        pass_input = self.sel_find_css(driver, 'input[type="password"]', wait=3)
+        pass_input.send_keys(self.config['TW']['password'])
+        self.sel_find_css(driver, 'div[data-testid="LoginForm_Login_Button"]').click()
+        time.sleep(5)
+        self.sel_save_cookies(self.driver, prefix='twitter_')
+
+    def tw_check_accept_all_btn(self, driver):
+        """Check for 'accept all cookies' btn
+            TODO: multilang"""
+        print('Checking for Accept All btn')
+        btn = self.sel_find_css(self.driver, '.r-6416eg.r-lrvibr.r-lif3th', wait=2)
+        if btn:
+            try:
+                btn.click()
+            except StaleElementReferenceException:
+                time.sleep(1)
+                btn.click()
+            time.sleep(1)
+
     def run(self):
         url = self.urls[0]
-        proxy = ['45.140.13.112', '9125', 'vprbwqfr', 'k8zbsvlozpnm']
+        proxy = ['45.136.231.43', '7099', 'vprbwqfr', 'k8zbsvlozpnm']
         try:
             self.create_driver_instance(
                 'sel',
@@ -216,21 +258,16 @@ class TWScraper(Scraper):
                 proxy=proxy,
             )
             self.driver.get(url)
-            cookies_result = self.sel_load_cookies(self.driver, prefix='twitter_')
-            if not cookies_result:
-                print('Checking for Accept All btn')
-                btn = self.sel_find_css(self.driver, '.r-6416eg.r-lrvibr.r-lif3th', wait=2)
-                if btn:
-                    try:
-                        btn.click()
-                    except StaleElementReferenceException:
-                        time.sleep(1)
-                        btn.click()
-                    time.sleep(1)
-                    self.sel_save_cookies(self.driver, prefix='twitter_')
+            cookies_loaded = self.sel_load_cookies(self.driver, prefix='twitter_')
+
+            if not cookies_loaded:
+                self.tw_login(self.driver)
+                # self.tw_check_accept_all_btn(self.driver)
             else:
-                # 'do stuff with cookies'
-                pass
+                time.sleep(5)  # todo: check content appeared
+                for i in range(10):
+                    self.sel_humanlike_scroll_down(self.driver, height=1000, random_stop=True)
+                time.sleep(2)
         except HTTPError as e:
             print(url, '\n', e)
         except Exception as e:
