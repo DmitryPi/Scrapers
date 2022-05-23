@@ -31,13 +31,13 @@ class Scraper:
         self.proxies = load_proxies()
         self.driver = None
 
-    def create_driver_instance(self, driver: str, headless=False, use_ua=False, use_proxy=False):
+    def create_driver_instance(self, driver: str, headless=False, use_ua=False, use_proxy=False, proxy=[]):
         """Create webdriver instance with designated params and set self.driver
            Set driver to uc for undetected_chromedriver
            Any other will set selenium driver"""
         options = setup_uc_driver_options if driver == 'uc' else setup_selenium_driver_options
         driver = uc_webdriver if driver == 'uc' else webdriver
-        proxy = random.choice(self.proxies)
+        proxy = random.choice(self.proxies) if not proxy else proxy
         proxy_extension = ProxyExtension(*proxy) if use_proxy else None
         user_agent = setup_user_agent() if use_ua else ''
         options = options(
@@ -207,19 +207,19 @@ class TWScraper(Scraper):
 
     def run(self):
         url = self.urls[0]
+        proxy = ['45.140.13.112', '9125', 'vprbwqfr', 'k8zbsvlozpnm']
         try:
             self.create_driver_instance(
-                'uc',
+                'sel',
                 headless=False,
                 use_proxy=True,
+                proxy=proxy,
             )
-            self.driver.delete_all_cookies()
             self.driver.get(url)
             cookies_result = self.sel_load_cookies(self.driver, prefix='twitter_')
             if not cookies_result:
                 print('Checking for Accept All btn')
                 btn = self.sel_find_css(self.driver, '.r-6416eg.r-lrvibr.r-lif3th', wait=2)
-                print(btn)
                 if btn:
                     try:
                         btn.click()
