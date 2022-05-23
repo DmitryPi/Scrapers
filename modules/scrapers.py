@@ -249,7 +249,7 @@ class TWScraper(Scraper):
 
     def run(self):
         url = self.urls[0]
-        proxy = ['45.136.231.43', '7099', 'vprbwqfr', 'k8zbsvlozpnm']
+        proxy = json.loads(self.config['TW']['persist_proxy'])
         try:
             self.create_driver_instance(
                 'sel',
