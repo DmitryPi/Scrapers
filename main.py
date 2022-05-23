@@ -5,7 +5,7 @@ import sentry_sdk
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from modules.db import Database
-from modules.scrapers import VKScraper, WBScraper
+from modules.scrapers import VKScraper, WBScraper, TWScraper
 from modules.utils import load_config
 
 
@@ -39,3 +39,6 @@ if __name__ == '__main__':
     elif 'wb' in sys.argv:
         wb_scraper = WBScraper(config=config)
         wb_scraper.run()
+    elif 'tw' in sys.argv:
+        tw_scraper = TWScraper(config=config)
+        tw_scraper.run()

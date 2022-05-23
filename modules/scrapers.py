@@ -8,7 +8,7 @@ import undetected_chromedriver as uc_webdriver
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from urllib.error import HTTPError
@@ -193,6 +193,44 @@ class WBScraper(Scraper):
             time.sleep(1)
             self.wb_search_items()
             self.sel_save_cookies(self.driver, prefix='wb_')
+        except HTTPError as e:
+            print(url, '\n', e)
+        except Exception as e:
+            handle_error(e)
+
+
+class TWScraper(Scraper):
+    def __init__(self, config=None):
+        Scraper.__init__(self)
+        self.config = config if config else load_config()
+        self.urls = json.loads(self.config['TW']['urls'])
+
+    def run(self):
+        url = self.urls[0]
+        try:
+            self.create_driver_instance(
+                'uc',
+                headless=False,
+                use_proxy=True,
+            )
+            self.driver.delete_all_cookies()
+            self.driver.get(url)
+            cookies_result = self.sel_load_cookies(self.driver, prefix='twitter_')
+            if not cookies_result:
+                print('Checking for Accept All btn')
+                btn = self.sel_find_css(self.driver, '.r-6416eg.r-lrvibr.r-lif3th', wait=2)
+                print(btn)
+                if btn:
+                    try:
+                        btn.click()
+                    except StaleElementReferenceException:
+                        time.sleep(1)
+                        btn.click()
+                    time.sleep(1)
+                    self.sel_save_cookies(self.driver, prefix='twitter_')
+            else:
+                # 'do stuff with cookies'
+                pass
         except HTTPError as e:
             print(url, '\n', e)
         except Exception as e:
